@@ -8,7 +8,6 @@ sd.dll
 sd.a
 sd.lib
 sd-test-*
-sd
 *.exe
 *.o
 *.obj
