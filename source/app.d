@@ -2,6 +2,7 @@ import std.stdio;
 import gtk.Application;
 
 import sd.MainWindow;
+import sd.AppModel;
 
 class SDApp : Application
 {
@@ -9,8 +10,10 @@ class SDApp : Application
 	this()
 	{
 		super(APP_ID, GApplicationFlags.FLAGS_NONE);
+		auto model = new AppModel();
+
 		this.addOnActivate((app){
-				auto appWindow = new SDMainWindow();
+				auto appWindow = new SDMainWindow(model);
 				writeln("App activated");
 				addWindow(appWindow);
 				});
