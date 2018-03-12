@@ -1,6 +1,7 @@
 {
 	"fileVersion": 1,
 	"versions": {
+		"d2sqlite3": "0.16.0",
 		"gtk-d": "3.7.5"
 	}
 }

@@ -3,20 +3,28 @@ import gtk.Application;
 
 import sd.MainWindow;
 import sd.AppModel;
+import sd.AppController;
 
 class SDApp : Application
 {
-	private enum APP_ID = "yes9111.sd";
+private:
+	enum APP_ID = 	"yes9111.sd";
+	AppController 	controller;
+public:
 	this()
 	{
+		this(new AppModel());
+	}
+
+	this(AppModel model)
+	{
 		super(APP_ID, GApplicationFlags.FLAGS_NONE);
-		auto model = new AppModel();
+		controller = new AppController(model);
 
 		this.addOnActivate((app){
-				auto appWindow = new SDMainWindow(model);
-				writeln("App activated");
-				addWindow(appWindow);
-				});
+			auto appWindow = new SDMainWindow(controller);
+			addWindow(appWindow);
+		});
 	}
 }
 
