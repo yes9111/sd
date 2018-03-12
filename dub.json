@@ -1,0 +1,12 @@
+{
+	"name": "sd",
+	"authors": [
+		"Eugene Yang"
+	],
+	"dependencies": {
+		"gtk-d": "~>3.7.5"
+	},
+	"description": "SQLite db explorer in D",
+	"copyright": "Copyright © 2018, Eugene Yang",
+	"license": "MIT"
+}
