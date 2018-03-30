@@ -28,6 +28,10 @@ public:
 		model.removeDB(db);
 	}
 
+	void runSQL(string db, string sql){
+		model.runSQL(db, sql);
+	}
+
 	DBModel getModel(){
 		return model;
 	}

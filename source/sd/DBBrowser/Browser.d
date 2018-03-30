@@ -6,17 +6,16 @@ import gtk.Widget, gdk.Event;
 import gtk.MenuBar, gtk.MenuItem, gtk.Menu;
 import gtk.Notebook;
 import gtk.Box;
-import gtk.FlowBox;
 import gtk.FileChooserDialog;
 import gtk.ListStore;
 import gtk.TreeView;
-import std.typecons;
 
-import std.stdio, std.conv;
+import std.conv, std.typecons, std.experimental.logger;
 
 import sd.DBBrowser.Controller;
 import sd.DBBrowser.AppModel;
 import sd.type.Table;
+import sd.type.Matrix;
 
 class DBBrowser : MainWindow
 {
@@ -31,6 +30,7 @@ class DBBrowser : MainWindow
 
 		model.onOpen.register(&this.addDB);
 		model.onClose.register(&this.removeDB);
+		model.onSQL.register(&this.showSQLResults);
 
 		setDefaultSize(800, 600);
 		setup();
@@ -39,6 +39,7 @@ class DBBrowser : MainWindow
 
 private:
 	Notebook notebook;
+	string[] openDBs;
 
 	void setup()
 	{
@@ -49,7 +50,6 @@ private:
 		box.packStart(getMenuBar(), false, false, 0);
 		box.packStart(notebook, true, true, 5);
 	}
-
 
 	MenuBar getMenuBar(){
 		auto bar = new MenuBar();
@@ -84,13 +84,12 @@ private:
 		case "file.close":
 			int pageIndex = notebook.getCurrentPage();
 			if(pageIndex == -1) return;
-			string db = (cast(Label)notebook.getTabLabel(notebook.getNthPage(pageIndex))).getText();
-			controller.closeDB(db);
+			controller.closeDB(openDBs[notebook.getCurrentPage()]);
 			break;
 		case "file.exit":
 			break;
 		default:
-			stderr.writefln("Unknown menu action: %s", item.getActionName);
+			errorf("Unknown menu action: %s", item.getActionName);
 			break;
 		}
 	}
@@ -100,6 +99,8 @@ private:
 		import gtk.TreeIter;
 		import gtk.TreeViewColumn;
 		import gtk.CellRendererText;
+		import gtk.Entry;
+		import gtk.Grid;
 
 		string label = database.path.baseName;
 
@@ -107,6 +108,21 @@ private:
 		auto list = new TreeView(store);
 		auto column = new TreeViewColumn("Table", new CellRendererText(), "text", 0);
 		list.appendColumn(column);
+		list.setHexpand(true);
+		list.setVexpand(true);
+
+		auto entry = new Entry();
+		entry.addOnActivate((entry){
+			logf("Running SQL: %s", entry.getText());
+			controller.runSQL(openDBs[notebook.getCurrentPage()], entry.getText());
+		});
+		entry.setHexpand(true);
+
+		auto grid = new Grid();
+		grid.setOrientation(GtkOrientation.VERTICAL);
+
+		grid.add(entry);
+		grid.add(list);
 
 		foreach(table; database.tables){
 			TreeIter iter;
@@ -125,13 +141,32 @@ private:
 			auto editor = new TableEditor(database, table);
 		});
 
-		notebook.appendPage(list, label);
+		openDBs ~= database.path;
+		notebook.appendPage(grid, label);
 		notebook.showAll();
 	}
 
-	void removeDB(in Database event)
+	void removeDB(in Database db)
 	{
-		notebook.removePage(notebook.getCurrentPage());
+		int index;
+		while(index < openDBs.length && openDBs[index] != db.path)
+			++index;
+
+		assert(index < openDBs.length);
+		notebook.removePage(index);
+
+		while(index < openDBs.length-1)
+		{
+			openDBs[index] = openDBs[index+1];
+			++index;
+		}
+		openDBs = openDBs[0 .. $-1];
+	}
+
+	void showSQLResults(Matrix results)
+	{
+		import sd.MatrixViewer.Viewer;
+		auto viewer = new MatrixViewer(results);
 	}
 
 protected:

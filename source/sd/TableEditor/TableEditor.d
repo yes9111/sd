@@ -10,9 +10,6 @@ class TableEditor
 	public this(in Database database, string table)
 	{
 		auto model = new TableModel(database, table);
-		/*
-		auto view = new View(model);
-		*/
 		auto structureEditor = new StructureEditor(model);
 		structureEditor.showAll();
 	}

@@ -49,21 +49,12 @@ class StructureEditor : Window
     {
         auto grid = new Grid();
         grid.setOrientation(GtkOrientation.VERTICAL);
-        auto entry = new Entry();
-        entry.addOnActivate(&runSQL);
-        grid.add(entry);
         auto label = new Label("_Hello World", true);
         label.setHexpand(true);
         label.setVexpand(true);
         grid.add(label);
 
         notebook.appendPage(grid, new Label("Data"));
-    }
-
-    void runSQL(Entry entry)
-    {
-        auto sql = entry.getText();
-        model.runSQL(sql);
     }
 
 	enum StructureColumns

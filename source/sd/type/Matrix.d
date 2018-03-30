@@ -6,29 +6,27 @@ import sd.type.Column;
 struct Matrix
 {
     Column[] columns;
-    Row[] rows;
+	CachedResults results;
 
     void clear()
     {
         columns = null;
-        rows = null;
+		results = results.init;
     }
 
-    void appendRow(Row row)
-    {
-        rows ~= row;
-    }
+	void set(Column[] columns, CachedResults results)
+	{
+		if(results.length == 0){
+			clear();
+			return;
+		}
 
-    void resize(Row row)
-    {
-        import std.algorithm : map;
+		this.columns = columns;
+		this.results = results;
+	}
 
-        columns = new Column[row.length];
-        foreach(i; 0 .. row.length)
-        {
-            columns[i] = Column(row.columnName(i), row.columnType(i));
-        }
-    }
-
-
+	ulong getNCols() const
+	{
+		return columns.length;
+	}
 }

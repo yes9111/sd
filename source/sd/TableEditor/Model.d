@@ -1,6 +1,6 @@
 module sd.TableEditor.Model;
 
-import d2sqlite3 : SQLDatabase = Database, Row, SqliteException;
+import d2sqlite3 : SQLDatabase = Database, Row, SqliteException, cached;
 import sd.type.Table;
 import sd.type.Column;
 import sd.type.Matrix;
@@ -45,25 +45,14 @@ class TableModel
 
     void runSQL(string sql)
     {
+		import sd.sql.util : getQueryColumns;
         try
         {
             results.clear();
 
             auto db = SQLDatabase(database.path);
 
-            auto sqlResults = db.execute(sql);
-            bool init = false;
-
-            foreach(row; sqlResults)
-            {
-                if(!init)
-                {
-                    results.resize(row);
-                    init = true;
-                }
-
-                results.appendRow(row);
-            }
+            results.set(getQueryColumns(db, sql), db.execute(sql).cached);
 
             onSQL.fire(table, sql, results);
         }
