@@ -8,7 +8,6 @@ class SDApp : Application{
 public:
     this(){
         super(APP_ID, GApplicationFlags.FLAGS_NONE);
-
         addOnActivate((app){
             auto browser = new DBBrowser();
             addWindow(browser);
