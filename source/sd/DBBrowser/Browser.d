@@ -124,8 +124,11 @@ private:
 		grid.add(entry);
 		grid.add(list);
 
-		foreach(table; database.tables){
-			TreeIter iter;
+		import std.algorithm : each;
+
+		TreeIter iter;
+		foreach(table; database.tables)
+		{
 			store.append(iter);
 			store.setValue(iter, 0, table);
 		}

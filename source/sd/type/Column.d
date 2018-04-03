@@ -2,7 +2,7 @@ module sd.type.Column;
 
 public import d2sqlite3 : SqliteType;
 
-string type2str(SqliteType t)
+string toString(SqliteType t)
 {
 	switch(t)
 	{

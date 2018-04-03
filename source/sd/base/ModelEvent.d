@@ -8,8 +8,9 @@ mixin template ModelEvent(string eventID, T)
 	
 	void fire(Parameters!T args)
 	{
-		foreach(h; handlers)
-			h(args);
+		import std.algorithm : each;
+
+		handlers.each!(h => h(args));
 	}
 
 	ulong register(T handler){

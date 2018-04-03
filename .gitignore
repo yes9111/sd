@@ -13,3 +13,4 @@ sd-test-*
 *.obj
 *.lst
 build
+nohup.out

@@ -30,10 +30,12 @@ public:
 		auto db = SQLDatabase(path);
 		auto results = db.execute("SELECT name FROM sqlite_master WHERE type='table'");
 		auto tables = appender!(string[]);
+
 		foreach(row; results)
 		{
 			tables.put(row.peek!string(0));
 		}
+
 		Database dbInfo = Database(path, tables.data);
 		dbs[path] = dbInfo;
 		onOpen.fire(dbInfo);
