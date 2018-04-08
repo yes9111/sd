@@ -38,6 +38,11 @@ class TableModel
 		return table.table;
 	}
 
+	string getDB() const
+	{
+		return database.path;
+	}
+
 	const(Column[]) getColumns() const
 	{
 		return table.columns;
