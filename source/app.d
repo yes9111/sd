@@ -1,6 +1,5 @@
 import std.stdio;
 import gtk.Application;
-
 import sd.DBBrowser.Browser;
 
 class SDApp : Application{

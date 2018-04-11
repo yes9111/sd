@@ -1,6 +1,6 @@
 module sd.TableEditor.Model;
 
-import d2sqlite3 : SQLDatabase = Database, Row, SqliteException, cached;
+import d2sqlite3 : SQLDatabase = Database, Row, SqliteException, cached, TableColumnMetadata;
 import sd.type.Table;
 import sd.type.Column;
 import sd.type.Matrix;
@@ -12,13 +12,14 @@ class TableModel
     private const Database database;
     private Table table;
     private Matrix results;
+	private int pkColumnIndex;
 
     public mixin ModelEvent!("table:run", void delegate(Table table, string sql, Matrix matrix)) onSQL;
     public mixin ModelEvent!("table:load", void delegate(Table table, Matrix matrix)) onLoad;
 
 
-	this(in Database database, string table)
-	{
+    this(in Database database, string table)
+    {
         import std.algorithm : map;
         import std.array : array;
 
@@ -26,31 +27,51 @@ class TableModel
         auto db = SQLDatabase(database.path);
         auto results = db.execute("PRAGMA table_info(" ~ table ~ ")");
 
+		int i;
         Column[] columns = results
-        .map!(row => Column(row.peek!string(1), row.peek!string(2).parseSQLType))
+        .map!((row){
+			auto name = row.peek!string(1);
+			auto columnMeta = db.tableColumnMetadata(table, name);
+
+			if(columnMeta.isPrimaryKey)
+			{
+				pkColumnIndex = i;
+			}
+
+			++i;
+            return Column(
+                name, 
+				row.peek!string(2).parseSQLType
+			);
+        })
         .array;
 
         this.table = Table(table, columns);
+    }
+
+	int getPKIndex() const
+	{
+		return pkColumnIndex;
 	}
 
-	string getName() const
-	{
-		return table.table;
-	}
+    string getName() const
+    {
+        return table.table;
+    }
 
-	string getDB() const
-	{
-		return database.path;
-	}
+    string getDB() const
+    {
+        return database.path;
+    }
 
-	const(Column[]) getColumns() const
-	{
-		return table.columns;
-	}
+    const(Column[]) getColumns() const
+    {
+        return table.columns;
+    }
 
     void runSQL(string sql)
     {
-		import sd.sql.util : getQueryColumns;
+        import sd.sql.util : getQueryColumns;
         try
         {
             results.clear();
@@ -67,4 +88,6 @@ class TableModel
             //trace("SQL error: ");
         }
     }
+
+
 }

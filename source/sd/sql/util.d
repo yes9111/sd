@@ -49,7 +49,8 @@ Value toGValue(ColumnData field)
 		case SqliteType.BLOB:
 			return new Value(field.as!string);
 		case SqliteType.NULL:
-			return null;
+			return new Value("NULL");
+			//return null;
 		default:
 			throw new Exception("Unknown SQLType.");
 	}
