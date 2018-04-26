@@ -1,4 +1,4 @@
-module sd.DBBrowser.Controller;
+module sd.DBBrowser.AppController;
 
 import std.stdio, std.file, std.path, std.typecons;
 

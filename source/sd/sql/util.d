@@ -23,6 +23,10 @@ Column[] getQueryColumns(Database db, string query)
 	return cols;
 }
 
+/**
+ * Helper function to convert d2sqlite3 types to gtkD usable GTypes
+ * Helpful for use with TreeViews
+ */
 GType toGType(SqliteType type)
 {
 	switch(type)
@@ -36,6 +40,9 @@ GType toGType(SqliteType type)
 	}
 }
 
+/**
+ * Helper function to convert d2sqlite3 ColumnField data type into GValue
+ */
 Value toGValue(ColumnData field)
 {
 	switch(field.type)

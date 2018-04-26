@@ -12,7 +12,7 @@ import gtk.TreeView;
 
 import std.conv, std.typecons, std.experimental.logger;
 
-import sd.DBBrowser.Controller;
+import sd.DBBrowser.AppController;
 import sd.DBBrowser.AppModel;
 import sd.type.Table;
 import sd.type.Matrix;
@@ -27,7 +27,7 @@ class DBBrowser : MainWindow
 		super("Explore SQL");
 		model = new DBModel();
 		controller = new Controller(model);
-
+    
 		model.onOpen.register(&this.addDB);
 		model.onClose.register(&this.removeDB);
 		model.onSQL.register(&this.showSQLResults);
