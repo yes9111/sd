@@ -33,37 +33,49 @@ class DataEditor
 private class Controller
 {
     Model model;
-
+    
     this(Model model)
     {
         this.model = model;
     }
     
+    /**
+     * Interfaces with SQL database to update one field
+     * Also updates the model to reflect that change.
+     */
     void editColumn(string path, size_t cIndex, string newValue)
     {
 		import std.format : format;
 		import std.experimental.logger : log, logf;
-		import gobject.Value;
-        import gtk.TreeIter;
+		import gobject.Value : Value;
+        import gtk.TreeIter : TreeIter;
         
         assert(cIndex < model.columns.length);
 
+        
 		logf("PK Index is %d for table %s", model.tableModel.getPKIndex, model.tableModel.getName);
         
         auto iter = new TreeIter(model, path);
         auto pkValue = iter.getValueInt(model.tableModel.getPKIndex);
         
         auto colName = model.columns[cIndex].name;
+        
+        logf("Changing column number %d: %s", cIndex, colName);
+        
         auto db = Database(model.tableModel.getDB);
         
-		auto stmtText = format("UPDATE %s SET %s=:value WHERE %s=:id", model.tableModel.getName(), colName, model.tableModel.getColumns[model.tableModel.getPKIndex()].name);
+		auto stmtText = format("UPDATE %s SET %s=:value WHERE %s=:id", 
+            model.tableModel.getName(), 
+            colName, 
+            model.tableModel.getColumns[model.tableModel.getPKIndex()].name);
         
 		log("Prepared statement: ", stmtText);
         auto stmt = db.prepare(stmtText);
-		logf("Binding values: %s, %d", newValue, pkValue);
+		logf("Binding values: \"%s\", %d", newValue, pkValue);
 		stmt.bindAll(newValue, pkValue);
         stmt.execute();
         
+        log("Updated table ", model.tableModel.getName);
         model.setValue(iter, cast(int)cIndex, newValue);
     }
 }
@@ -78,10 +90,10 @@ private class Model : ListStore
 
     this(TableModel tableModel)
     {
-        import sd.sql.util;
+        import sd.sql.util : toGType;
         import std.algorithm : map;
         import std.array : array;
-        import std.stdio;
+        import std.stdio : writeln;
 
         this.tableModel = tableModel;
         columns = tableModel.getColumns();
@@ -104,7 +116,7 @@ private class Model : ListStore
 
     void loadNext()
     {
-        import gtk.TreeIter;
+        import gtk.TreeIter : TreeIter;
         import std.range : iota;
         import std.array : array;
         import sd.sql.util : toGValue;
@@ -115,24 +127,14 @@ private class Model : ListStore
             auto db = Database(this.tableModel.getDB);
             results = db.execute("SELECT * FROM " ~ this.tableModel.getName()).nullable;
         }
-        immutable n = 50;
-        int[] cIndexes = iota(0, cast(int)columns.length).array;
-        foreach(i; 0 .. n)
+        
+        foreach(row; results)
         {
-            if(results.empty) break;
-
-            import gobject.Value;
-            Value[] vals;
             TreeIter iter;
             append(iter);
-
-            auto row = results.front;
+            int colIndex;
             foreach(col; row)
-            {
-                vals ~= col.toGValue();
-            }
-            setValuesv(iter, cIndexes, vals);
-            results.popFront();
+                setValue(iter, colIndex++, col.toGValue);
         }
     }
 }
@@ -160,15 +162,21 @@ private class View
     {
         import gtk.TreeViewColumn : TreeViewColumn;
 
+        auto createEditor(int colIndex)
+        {
+            return (string path, string newValue, CellRendererText renderer){
+                controller.editColumn(path, colIndex, newValue);
+            };
+        }
+        
         auto view = new TreeView(model);
 
         foreach(i, col; model.columns){
             CellRendererText renderer = new CellRendererText();
             renderer.setProperty("editable", 1);
             renderer.setProperty("editable-set", 1);
-            renderer.addOnEdited((path, newValue, renderer){
-                controller.editColumn(path, i, newValue);
-            });
+            //renderer.setProperty("column-index", i);
+            renderer.addOnEdited(createEditor(cast(int)i));
 
             auto column = new TreeViewColumn(
                 col.name,

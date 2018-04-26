@@ -12,7 +12,7 @@ class TableModel
     private const Database database;
     private Table table;
     private Matrix results;
-	private int pkColumnIndex;
+    private int pkColumnIndex;
 
     public mixin ModelEvent!("table:run", void delegate(Table table, string sql, Matrix matrix)) onSQL;
     public mixin ModelEvent!("table:load", void delegate(Table table, Matrix matrix)) onLoad;
@@ -27,7 +27,7 @@ class TableModel
         auto db = SQLDatabase(database.path);
         auto results = db.execute("PRAGMA table_info(" ~ table ~ ")");
 
-		int i;
+        int i;
         Column[] columns = results
         .map!((row){
 			auto name = row.peek!string(1);
