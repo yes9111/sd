@@ -21,6 +21,7 @@ class MatrixViewer : Window
 
 		store = createStore(matrix);
 		setupView(matrix);
+		setDefaultSize(640, 480);
 		showAll();
 	}
 

@@ -9,7 +9,7 @@ class SDApp : Application{
     private enum APP_ID = "yes9111.sd";
 public:
     /**
-     * Some public documentation
+     * Top level SQL D app
      */
     this(){
         super(APP_ID, GApplicationFlags.FLAGS_NONE);
