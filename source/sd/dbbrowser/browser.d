@@ -1,4 +1,4 @@
-module sd.DBBrowser.Browser;
+module sd.dbbrowser.browser;
 
 import gtk.MainWindow;
 import gtk.Label;
@@ -12,12 +12,16 @@ import gtk.TreeView;
 
 import std.conv, std.typecons, std.experimental.logger;
 
-import sd.DBBrowser.Controller;
-import sd.DBBrowser.AppModel;
-import sd.type.Table;
-import sd.type.Matrix;
+import sd.dbbrowser.controller;
+import sd.dbbrowser.model;
+import sd.type.table;
+import sd.type.database : Database;
+import sd.type.matrix;
 
-class DBBrowser : MainWindow
+/**
+Top level window to handle browsing/selecting databases
+*/
+final class DBBrowser : MainWindow
 {
 	private Controller controller;
 	private DBModel model;
@@ -47,11 +51,11 @@ private:
 		add(box);
 		notebook = createNotebook();
 
-		box.packStart(getMenuBar(), false, false, 0);
-		box.packStart(notebook, true, true, 5);
+		box.packStart(createMenuBar(), false, false, 0);
+		box.packStart(notebook, true, true, 0);
 	}
 
-	MenuBar getMenuBar(){
+	MenuBar createMenuBar(){
 		auto bar = new MenuBar();
 		auto fileMenu = bar.append("File");
 		fileMenu.append(new MenuItem(&onMenuActivate, "Open DB", "file.open"));
@@ -77,32 +81,29 @@ private:
 			}
 			chooser.run();
 			scope(exit) chooser.hide();
-
 			string dbFile = chooser.getFilename();
 			controller.openDB(dbFile);
 			break;
 		case "file.close":
-			int pageIndex = notebook.getCurrentPage();
+			immutable pageIndex = notebook.getCurrentPage();
 			if(pageIndex == -1) return;
-			controller.closeDB(openDBs[notebook.getCurrentPage()]);
+			controller.closeDB(openDBs[pageIndex]);
 			break;
 		case "file.exit":
 			break;
 		default:
-			errorf("Unknown menu action: %s", item.getActionName);
+			errorf("Unknown menu action: %s", action);
 			break;
 		}
 	}
 
 	void addDB(in Database database){
-		import std.path;
-		import gtk.TreeIter;
-		import gtk.TreeViewColumn;
-		import gtk.CellRendererText;
-		import gtk.Entry;
-		import gtk.Grid;
-
-		string label = database.path.baseName;
+		import std.path : baseName;
+		import gtk.TreeIter : TreeIter;
+		import gtk.TreeViewColumn: TreeViewColumn;
+		import gtk.CellRendererText : CellRendererText;
+		import gtk.Entry : Entry;
+		import gtk.Grid : Grid;
 
 		auto store = new ListStore([ GType.STRING ]);
 		auto list = new TreeView(store);
@@ -112,7 +113,8 @@ private:
 		list.setVexpand(true);
 
 		auto entry = new Entry();
-		entry.addOnActivate((entry){
+		entry.setPlaceholderText("Query custom SQL here");
+		entry.addOnActivate((Entry entry){
 			logf("Running SQL: %s", entry.getText());
 			controller.runSQL(openDBs[notebook.getCurrentPage()], entry.getText());
 		});
@@ -124,8 +126,6 @@ private:
 		grid.add(entry);
 		grid.add(list);
 
-		import std.algorithm : each;
-
 		TreeIter iter;
 		foreach(table; database.tables)
 		{
@@ -134,18 +134,26 @@ private:
 		}
 
 		list.addOnRowActivated((path, column, view){
-			import sd.TableEditor.TableEditor;
+			import sd.tableeditor.tableeditor: TableEditor;
 
 			TreeIter row = new TreeIter();
 			store.getIter(row, path);
-			
-			string table = row.getValueString(0);
-
-			auto editor = new TableEditor(database, table);
+			string tableName = row.getValueString(0);
+			try
+			{
+				new TableEditor(database, tableName);
+			}
+			catch(Exception e)
+			{
+				errorf("Failed to create table editor for table %s: Exception %s",
+					tableName,
+					e, 
+				);
+			}
 		});
 
 		openDBs ~= database.path;
-		notebook.appendPage(grid, label);
+		notebook.appendPage(grid, database.path.baseName);
 		notebook.showAll();
 	}
 
@@ -168,7 +176,7 @@ private:
 
 	void showSQLResults(Matrix results)
 	{
-		import sd.MatrixViewer.Viewer;
+		import sd.matrixviewer.viewer;
 		auto viewer = new MatrixViewer(results);
 	}
 

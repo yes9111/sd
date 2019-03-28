@@ -3,7 +3,7 @@ module sd.sql.util;
 import d2sqlite3;
 import gobject.Value;
 
-import sd.type.Column;
+import sd.type.column;
 
 Column[] getQueryColumns(Database db, string query)
 {

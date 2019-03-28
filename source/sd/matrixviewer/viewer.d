@@ -1,20 +1,27 @@
-module sd.MatrixViewer.Viewer;
+module sd.matrixviewer.viewer;
 
-import std.experimental.logger;
 import std.range : enumerate;
-import std.algorithm;
+import std.algorithm : each, map;
+
+import d2sqlite3;
 
 import gobject.Value;
 import gtk.Window;
 import gtk.ListStore;
-import sd.type.Matrix;
-import sd.sql.util;
-import d2sqlite3;
 
+import sd.type.matrix;
+import sd.sql.util;
+
+/**
+Window that will display arbitrary SQL query results (matrixes)
+*/
 class MatrixViewer : Window
 {
 	private ListStore store;
 
+	/**
+	Constructs a matrix viewer, given a result matrix 
+	*/
 	this(Matrix matrix)
 	{
 		super("Results");
@@ -25,31 +32,26 @@ class MatrixViewer : Window
 		showAll();
 	}
 
-	void setupView(Matrix matrix)
+	private void setupView(Matrix matrix)
 	{
-		import gtk.TreeView, gtk.TreeViewColumn;
-		import gtk.ScrolledWindow;
-		import gtk.CellRendererText;
-		import std.conv : to;
+		import gtk.TreeView : TreeView;
+		import gtk.TreeViewColumn : TreeViewColumn;
+		import gtk.ScrolledWindow : ScrolledWindow;
+		import gtk.CellRendererText : CellRendererText;
 
 		auto tree = new TreeView(store);
 
-		matrix.columns.enumerate.each!((col){
-			tree.appendColumn(new TreeViewColumn(
-					col.value.name,
-					new CellRendererText(),
-					"text",
-					cast(uint) col.index
-			));
-		});
-
+		foreach (index, col; matrix.columns.enumerate)
+		{
+			tree.appendColumn(new TreeViewColumn(col.name,
+					new CellRendererText(), "text", cast(uint) index));
+		}
 		auto scrolledWindow = new ScrolledWindow();
 		scrolledWindow.add(tree);
-
 		add(scrolledWindow);
 	}
 
-	ListStore createStore(Matrix matrix)
+	private ListStore createStore(Matrix matrix)
 	{
 		import gtk.TreeIter;
 		import std.array : array;
@@ -58,15 +60,14 @@ class MatrixViewer : Window
 
 		auto store = new ListStore(types);
 		TreeIter iter;
-		foreach(row; matrix.results)
+		foreach (row; matrix.results)
 		{
 			store.append(iter);
-			
-			row.enumerate.each!((field){
+
+			row.enumerate.each!((field) {
 				store.setValue(iter, cast(int) field.index, field.value.toGValue);
 			});
 		}
 		return store;
 	}
 }
-

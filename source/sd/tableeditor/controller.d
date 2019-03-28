@@ -1,8 +1,8 @@
-module sd.TableEditor.Controller;
+module sd.tableeditor.controller;
 
-import sd.type.Table;
-import sd.TableEditor.Model;
-import sd.TableEditor.TableEditor;
+import sd.type.table;
+import sd.tableeditor.model;
+import sd.tableeditor.tableeditor;
 
 class Controller{
 	private TableEditor view;

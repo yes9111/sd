@@ -1,15 +1,16 @@
-module sd.TableEditor.DataEditor.DataEditor;
+module sd.tableeditor.dataeditor.editor;
 
 import std.algorithm;
+import std.experimental.logger;
 
 import gtk.Window;
 import gtk.Widget;
 import gtk.ListStore;
 import d2sqlite3;
 
-import sd.base.ModelEvent;
-import sd.TableEditor.Model;
-import sd.type.Column;
+import sd.base.modelevent;
+import sd.tableeditor.model;
+import sd.type.column;
 
 class DataEditor
 {
@@ -33,56 +34,82 @@ class DataEditor
 private class Controller
 {
     Model model;
-    
+
     this(Model model)
     {
         this.model = model;
     }
-    
+
     /**
      * Interfaces with SQL database to update one field
      * Also updates the model to reflect that change.
      */
     void editColumn(string path, size_t cIndex, string newValue)
     {
-		import std.format : format;
-		import std.experimental.logger : log, logf;
-		import gobject.Value : Value;
+        import std.format : format;
+        import gobject.Value : Value;
         import gtk.TreeIter : TreeIter;
-        
+
         assert(cIndex < model.columns.length);
 
-        
-		logf("PK Index is %d for table %s", model.tableModel.getPKIndex, model.tableModel.getName);
-        
+        tracef("PK Index is %d for table %s", model.tableModel.getPKIndex,
+                model.tableModel.getName);
+
         auto iter = new TreeIter(model, path);
-        auto pkValue = iter.getValueInt(model.tableModel.getPKIndex);
-        
-        auto colName = model.columns[cIndex].name;
-        
-        logf("Changing column number %d: %s", cIndex, colName);
-        
+        auto pkValue = iter.getValueInt(cast(int)model.tableModel.getPKIndex);
+
+        auto col = model.columns[cIndex];
+
+        tracef("Changing column number %d: %s", cIndex, col.name);
+
         auto db = Database(model.tableModel.getDB);
-        
-		auto stmtText = format("UPDATE %s SET %s=:value WHERE %s=:id", 
-            model.tableModel.getName(), 
-            colName, 
-            model.tableModel.getColumns[model.tableModel.getPKIndex()].name);
-        
-		log("Prepared statement: ", stmtText);
+
+        auto stmtText = format("UPDATE %s SET %s=:value WHERE %s=:id", model.tableModel.getName(),
+                col.name, model.tableModel.getColumns[model.tableModel.getPKIndex()].name);
+
+        tracef("Prepared statement: ", stmtText);
         auto stmt = db.prepare(stmtText);
-		logf("Binding values: \"%s\", %d", newValue, pkValue);
-		stmt.bindAll(newValue, pkValue);
+        stmt.bind(":id", pkValue);
+        tracef("Binding values: \"%s\", %d", newValue, pkValue);
+
+        import std.conv : to;
+
+        switch (col.type)
+        {
+        case SqliteType.INTEGER:
+            stmt.bind(":value", newValue.to!int);
+            break;
+        case SqliteType.FLOAT:
+            stmt.bind(":value", newValue.to!float);
+            break;
+        case SqliteType.TEXT:
+            stmt.bind(":value", newValue);
+            break;
+        default:
+            errorf("Not sure how to set to column type: %d", col.type);
+            return;
+        }
         stmt.execute();
-        
-        log("Updated table ", model.tableModel.getName);
-        model.setValue(iter, cast(int)cIndex, newValue);
+        trace("Updated table ", model.tableModel.getName);
+        switch (col.type){
+        case SqliteType.INTEGER:
+            model.setValue(iter, cast(int) cIndex, newValue.to!int);
+            break;
+        case SqliteType.FLOAT:
+            model.setValue(iter, cast(int) cIndex, newValue.to!float);
+            break;
+        case SqliteType.TEXT:
+            model.setValue(iter, cast(int) cIndex, newValue);
+            break;
+        default:
+            assert(false, "Should not reach this point");            
+        }
     }
 }
 
 import std.typecons;
 
-private class Model : ListStore
+final private class Model : ListStore
 {
     private const Column[] columns;
     private const TableModel tableModel;
@@ -98,15 +125,15 @@ private class Model : ListStore
         this.tableModel = tableModel;
         columns = tableModel.getColumns();
         auto types = columns.map!(c => c.type.toGType).array;
-        foreach(i, type; types)
+        foreach (i, type; types)
         {
-            if(type == GType.NONE)
+            if (type == GType.NONE)
             {
-                writeln("None type found (NULL) for column: ", columns[i].name);
+                warningf("None type found (NULL) for column: ", columns[i].name);
             }
-            else if(type == GType.INVALID)
+            else if (type == GType.INVALID)
             {
-                writeln("Invalid type found for column: ", columns[i]);
+                warningf("Invalid type found for column: ", columns[i]);
             }
         }
 
@@ -121,31 +148,31 @@ private class Model : ListStore
         import std.array : array;
         import sd.sql.util : toGValue;
 
-        if(results.isNull)
+        if (results.isNull)
         {
 
             auto db = Database(this.tableModel.getDB);
             results = db.execute("SELECT * FROM " ~ this.tableModel.getName()).nullable;
         }
-        
-        foreach(row; results)
+
+        foreach (row; results)
         {
             TreeIter iter;
             append(iter);
             int colIndex;
-            foreach(col; row)
+            foreach (col; row)
                 setValue(iter, colIndex++, col.toGValue);
         }
     }
 }
 
-import gtk.TreeView;
-import gtk.Frame;
-import gtk.ScrolledWindow;
-import gtk.CellRendererText;
-
 private class View
 {
+    import gtk.TreeView : TreeView;
+    import gtk.Frame : Frame;
+    import gtk.ScrolledWindow : ScrolledWindow;
+    import gtk.CellRendererText : CellRendererText;
+
     private TreeView treeView;
     private ScrolledWindow scrolledWindow;
     private Controller controller;
@@ -158,32 +185,28 @@ private class View
         scrolledWindow.add(treeView);
     }
 
-    TreeView setupTreeView(Model model)
+    private TreeView setupTreeView(Model model)
     {
         import gtk.TreeViewColumn : TreeViewColumn;
 
-        auto createEditor(int colIndex)
+        auto createEditor(size_t colIndex)
         {
-            return (string path, string newValue, CellRendererText renderer){
+            return (string path, string newValue, CellRendererText _) {
                 controller.editColumn(path, colIndex, newValue);
             };
         }
-        
+
         auto view = new TreeView(model);
 
-        foreach(i, col; model.columns){
+        foreach (i, col; model.columns)
+        {
             CellRendererText renderer = new CellRendererText();
             renderer.setProperty("editable", 1);
             renderer.setProperty("editable-set", 1);
             //renderer.setProperty("column-index", i);
-            renderer.addOnEdited(createEditor(cast(int)i));
+            renderer.addOnEdited(createEditor(i));
 
-            auto column = new TreeViewColumn(
-                col.name,
-                renderer,
-                "text",
-                cast(int)i
-            );
+            auto column = new TreeViewColumn(col.name, renderer, "text", cast(int) i);
 
             view.appendColumn(column);
         }

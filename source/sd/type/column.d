@@ -1,4 +1,4 @@
-module sd.type.Column;
+module sd.type.column;
 
 public import d2sqlite3 : SqliteType;
 

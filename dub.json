@@ -4,7 +4,7 @@
 		"Eugene Yang"
 	],
 	"dependencies": {
-		"gtk-d": "~>3.7.5",
+		"gtk-d:gtkd": "~>3.7.5",
 		"d2sqlite3": "~>0.16.0"
 	},
 	"description": "SQLite db explorer in D",

@@ -1,4 +1,4 @@
-module sd.base.ModelEvent;
+module sd.base.modelevent;
 
 public import std.traits : Parameters;
 

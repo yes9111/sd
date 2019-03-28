@@ -1,9 +1,9 @@
-module sd.TableEditor.TableEditor;
+module sd.tableeditor.tableeditor;
 
-import sd.TableEditor.Model;
-import sd.TableEditor.View;
-
-import sd.type.Table;
+import sd.type.database : Database;
+import sd.tableeditor.model;
+import sd.tableeditor.view;
+import sd.type.table;
 
 class TableEditor
 {

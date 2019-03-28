@@ -1,6 +1,7 @@
 import std.stdio;
 import gtk.Application;
-import sd.DBBrowser.Browser;
+
+import sd.dbbrowser.browser;
 
 /**
  * SD GTK Application 

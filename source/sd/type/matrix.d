@@ -1,7 +1,7 @@
-module sd.type.Matrix;
+module sd.type.matrix;
 
 import d2sqlite3;
-import sd.type.Column;
+import sd.type.column;
 
 struct Matrix
 {
