@@ -2,6 +2,7 @@ module sd.tableeditor.dataeditor.editor;
 
 import std.algorithm;
 import std.experimental.logger;
+import std.typecons : nullable, Nullable;
 
 import gtk.Window;
 import gtk.Widget;
@@ -106,8 +107,6 @@ private class Controller
         }
     }
 }
-
-import std.typecons;
 
 final private class Model : ListStore
 {

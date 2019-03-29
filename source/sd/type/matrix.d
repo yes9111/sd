@@ -1,28 +1,19 @@
 module sd.type.matrix;
 
-import d2sqlite3;
+import d2sqlite3 : CachedResults, ResultRange, cached;
 import sd.type.column;
 
-struct Matrix
+class Matrix
 {
-    Column[] columns;
+	const Column[] columns;
 	CachedResults results;
 
-    void clear()
-    {
-        columns = null;
-		results = results.init;
-    }
-
-	void set(Column[] columns, CachedResults results)
+	this(ResultRange results)
 	{
-		if(results.length == 0){
-			clear();
-			return;
-		}
+		import sd.sql.util : getQueryColumns;
 
-		this.columns = columns;
-		this.results = results;
+		this.columns = results.getQueryColumns();
+		this.results = results.cached;
 	}
 
 	ulong getNCols() const

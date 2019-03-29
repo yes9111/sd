@@ -53,7 +53,7 @@ class MatrixViewer : Window
 
 	private ListStore createStore(Matrix matrix)
 	{
-		import gtk.TreeIter;
+		import gtk.TreeIter : TreeIter;
 		import std.array : array;
 
 		auto types = matrix.columns.map!(c => c.type.toGType).array;

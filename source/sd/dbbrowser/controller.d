@@ -3,12 +3,12 @@ module sd.dbbrowser.controller;
 import sd.dbbrowser.model;
 import sd.type.table;
 
-class Controller
+package final class DBBrowserController
 {
 private:
-	DBModel model;
+	DBBrowserModel model;
 public:
-	this(DBModel model)
+	this(DBBrowserModel model)
 	{
 		this.model = model;
 	}
@@ -39,7 +39,7 @@ public:
 		model.runSQL(db, sql);
 	}
 
-	DBModel getModel()
+	DBBrowserModel getModel()
 	{
 		return model;
 	}

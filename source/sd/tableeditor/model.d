@@ -45,16 +45,12 @@ class TableModel
 
     void runSQL(string sql)
     {
-        import sd.sql.util : getQueryColumns;
         try
         {
-            results.clear();
-
             auto sqlDB = SQLDatabase(table.db.path);
-
-            results.set(getQueryColumns(sqlDB, sql), sqlDB.execute(sql).cached);
-
-            onSQL.fire(table, sql, results);
+            auto results = sqlDB.execute(sql);
+            auto data = new Matrix(results);
+            onSQL.fire(table, sql, data);
         }
         catch(SqliteException e)
         {

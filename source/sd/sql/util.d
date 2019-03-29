@@ -5,9 +5,8 @@ import gobject.Value;
 
 import sd.type.column;
 
-Column[] getQueryColumns(Database db, string query)
+Column[] getQueryColumns(ResultRange results)
 {
-	auto results = db.execute(query);
 	if(results.empty)
 	{
 		return null;
